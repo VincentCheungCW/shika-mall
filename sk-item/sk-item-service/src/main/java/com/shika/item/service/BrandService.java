@@ -70,4 +70,21 @@ public class BrandService {
             }
         }
     }
+
+    public Brand queryByID(Long id){
+        Brand brand = brandMapper.selectByPrimaryKey(id);
+        if(brand == null){
+            throw new SkException(ExceptionEnum.BRAND_NOT_FOUND);
+        }
+        return brand;
+    }
+
+    public List<Brand> queryBrandsByCid(Long cid) {
+        List<Brand> brands = brandMapper.queryByCategoryId(cid);
+        if(CollectionUtils.isEmpty(brands)){
+            throw new SkException(ExceptionEnum.BRAND_NOT_FOUND);
+        }else {
+            return brands;
+        }
+    }
 }

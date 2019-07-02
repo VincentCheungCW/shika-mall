@@ -24,9 +24,8 @@ fdfs:
   thumb-image: # 缩略图（thumbnail）
     width: 60
     height: 60
-  #tracker地址192.168.32.52:11211 经VMWare NAT映射为192.168.23.129:22122
   tracker-list:
-    - 192.168.23.129:22122
+    - 192.168.32.25:22122
 #自定义配置
 sk:
   upload:
