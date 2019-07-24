@@ -1,0 +1,23 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: textMessage-service
+  rabbitmq:
+    host: 192.168.32.25
+    username: jiang
+    password: jiang
+    virtual-host: /shika
+  redis:
+    host: 192.168.32.25
+shika:
+  text-message:
+    accessKeyId: LTAIg0kafJcPN1U2 # 你自己的accessKeyId，LTAIf5vJTEe70iPa
+    accessKeySecret: M9TbRoDQU2b7o3lhFndAJt1liN3Ojb # 你自己的AccessKeySecret，A2ZGBWfrkz9arF908cmDWXmIrAlngA
+    signName: SHIKA # 签名名称
+    verifyCodeTemplate: SMS_170835013 # 模板名称
+
+#    AccessKeyID:
+#    LTAIg0kafJcPN1U2
+#    AccessKeySecret:
+#    M9TbRoDQU2b7o3lhFndAJt1liN3Ojb

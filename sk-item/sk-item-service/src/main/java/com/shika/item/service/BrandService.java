@@ -87,4 +87,12 @@ public class BrandService {
             return brands;
         }
     }
+
+    public List<Brand> queryByIds(List<Long> ids) {
+        List<Brand> brands = brandMapper.selectByIdList(ids);
+        if(CollectionUtils.isEmpty(brands)){
+            throw new SkException(ExceptionEnum.BRAND_NOT_FOUND);
+        }
+        return brands;
+    }
 }

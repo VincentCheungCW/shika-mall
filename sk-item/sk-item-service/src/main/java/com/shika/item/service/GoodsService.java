@@ -10,8 +10,10 @@ import com.shika.item.mapper.SpuDetailMapper;
 import com.shika.item.mapper.SpuMapper;
 import com.shika.item.mapper.StockMapper;
 import com.shika.item.pojo.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.aspectj.weaver.ast.Var;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class GoodsService {
     @Autowired
@@ -35,6 +38,8 @@ public class GoodsService {
     private CategoryService categoryService;
     @Autowired
     private BrandService brandService;
+    @Autowired
+    private AmqpTemplate amqpTemplate;
 
     public PageResult<Spu> querySpuByPage(Integer page, Integer rows, Boolean saleable, String key) {
         //分页
@@ -92,7 +97,14 @@ public class GoodsService {
         SpuDetail spuDetail = spu.getSpuDetail();
         spuDetail.setSpuId(spu.getId()); //上面spu新增完成已产生id
         spuDetailMapper.insert(spuDetail);
+        //新增sku和库存
         saveSkuAndStock(spu);
+        //发送RabbitMQ消息
+        try {
+            amqpTemplate.convertAndSend("item.insert", spu.getId()); //item.update为routingKey,exchangeName已在配置文件中设置
+        } catch (AmqpException e) {
+            log.error("{}商品消息发送异常，商品id：{}", "item.insert", spu.getId(), e);
+        }
     }
 
     //新增sku和库存
@@ -117,14 +129,14 @@ public class GoodsService {
         }
         //批量插入
         cnt = stockMapper.insertList(stockList);
-        if(cnt != stockList.size()){
+        if (cnt != stockList.size()) {
             throw new SkException(ExceptionEnum.GOODS_SAVE_ERROR);
         }
     }
 
     public SpuDetail queryDetailById(Long spuId) {
         SpuDetail spuDetail = spuDetailMapper.selectByPrimaryKey(spuId);
-        if(spuDetail == null){
+        if (spuDetail == null) {
             throw new SkException(ExceptionEnum.GOODS_NOT_FOUND);
         }
         return spuDetail;
@@ -135,32 +147,24 @@ public class GoodsService {
         Sku sku = new Sku();
         sku.setSpuId(spuId);
         List<Sku> skuList = skuMapper.select(sku);
-        if(CollectionUtils.isEmpty(skuList)){
+        if (CollectionUtils.isEmpty(skuList)) {
             throw new SkException(ExceptionEnum.SKU_NOT_FOUND);
         }
-        //查询库存,Java8 流API
         List<Long> ids = skuList.stream().map(Sku::getId).collect(Collectors.toList());
-        List<Stock> stockList = stockMapper.selectByIdList(ids);
-        if(CollectionUtils.isEmpty(stockList)){
-            throw new SkException(ExceptionEnum.STOCK_NOT_FOUND);
-        }
-        //把stockList变为stockMap<skuId,stock>
-        Map<Long, Integer> stockMap = stockList.stream()
-                .collect(Collectors.toMap(Stock::getSkuId, Stock::getStock));
-        skuList.forEach(s -> s.setStock(stockMap.get(s.getId())));
+        loadStockInSku(ids, skuList);
         return skuList;
     }
 
     @Transactional
     public void updateGoods(Spu spu) {
-        if(spu.getId() == null){
+        if (spu.getId() == null) {
             throw new SkException(ExceptionEnum.GOODS_NOT_FOUND);
         }
         //删除sku和stock
         Sku sku = new Sku();
         sku.setSpuId(spu.getId());
         List<Sku> skuList = skuMapper.select(sku);
-        if(!CollectionUtils.isEmpty(skuList)){
+        if (!CollectionUtils.isEmpty(skuList)) {
             skuMapper.delete(sku);
             List<Long> skuIds = skuList.stream().map(Sku::getId).collect(Collectors.toList());
             stockMapper.deleteByIdList(skuIds);
@@ -171,15 +175,61 @@ public class GoodsService {
         spu.setValid(null);
         spu.setSaleable(null);
         int cnt = this.spuMapper.updateByPrimaryKeySelective(spu);
-        if(cnt != 1){
+        if (cnt != 1) {
             throw new SkException(ExceptionEnum.GOODS_UPDATE_ERROR);
         }
         //修改detail
         cnt = spuDetailMapper.updateByPrimaryKeySelective(spu.getSpuDetail());
-        if(cnt != 1){
+        if (cnt != 1) {
             throw new SkException(ExceptionEnum.GOODS_UPDATE_ERROR);
         }
         //新增sku和stock
         saveSkuAndStock(spu);
+        //发送RabbitMQ消息
+        try {
+            amqpTemplate.convertAndSend("item.update", spu.getId()); //item.update为routingKey,exchangeName已在配置文件中设置
+        } catch (AmqpException e) {
+            log.error("{}商品消息发送异常，商品id：{}", "item.insert", spu.getId(), e);
+        }
+    }
+
+    public Spu querySpuById(Long id) {
+        //查询Spu
+        Spu spu = spuMapper.selectByPrimaryKey(id);
+        if (spu == null) {
+            throw new SkException(ExceptionEnum.GOODS_NOT_FOUND);
+        }
+        //查询Sku
+        List<Sku> skus = querySkuBySpuId(id);
+        spu.setSkus(skus);
+        //查询detail
+        SpuDetail spuDetail = queryDetailById(id);
+        spu.setSpuDetail(spuDetail);
+        return spu;
+    }
+
+    public List<Sku> queryskuByIds(List<Long> ids) {
+        List<Sku> skus = skuMapper.selectByIdList(ids);
+        if(CollectionUtils.isEmpty(skus)){
+            throw new SkException(ExceptionEnum.SKU_NOT_FOUND);
+        }
+        loadStockInSku(ids, skus);
+        return skus;
+    }
+
+    private void loadStockInSku(List<Long> ids, List<Sku> skus) {
+        //查询库存,Java8 流API
+        List<Stock> stockList = stockMapper.selectByIdList(ids);
+        if (CollectionUtils.isEmpty(stockList)) {
+            throw new SkException(ExceptionEnum.STOCK_NOT_FOUND);
+        }
+        //把stockList变为stockMap<skuId,stock>
+        Map<Long, Integer> stockMap = stockList.stream()
+                .collect(Collectors.toMap(Stock::getSkuId, Stock::getStock));
+        skus.forEach(s -> s.setStock(stockMap.get(s.getId())));
+    }
+
+    public Sku querySkuById(Long id) {
+        return this.skuMapper.selectByPrimaryKey(id);
     }
 }

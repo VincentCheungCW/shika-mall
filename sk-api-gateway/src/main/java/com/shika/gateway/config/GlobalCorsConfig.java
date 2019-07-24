@@ -21,6 +21,7 @@ public class GlobalCorsConfig {
         //1) 允许的域,不要写*，否则cookie就无法使用了
         //访问管理系统界面时要输入http://manage.shika.com
         config.addAllowedOrigin("http://manage.shika.com");
+        config.addAllowedOrigin("http://www.shika.com");
         //2) 是否发送Cookie信息
         config.setAllowCredentials(true);
         //3) 允许的请求方式

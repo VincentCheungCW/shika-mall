@@ -8,6 +8,16 @@
 		<module>sk-api-gateway</module>
         <module>sk-common</module>
         <module>sk-upload</module>
+        <module>sk-search</module>
+        <module>sk-page</module>
+        <module>sk-textMessage</module>
+        <module>sk-user</module>
+        <module>sk-auth</module>
+		<module>sk-auth-service</module>
+        <module>sk-auth-common</module>
+		<module>sk-auth</module>
+		<module>sk-auth</module>
+        <module>sk-cart</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>

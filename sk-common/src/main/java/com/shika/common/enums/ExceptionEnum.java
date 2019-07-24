@@ -41,24 +41,27 @@ public enum ExceptionEnum {
     PASSWORD_NOT_MATCHING(400, "密码错误"),
     USER_NOT_EXIST(404, "用户不存在"),
 
+
     SPEC_PARAM_NOT_FOUND(204, "规格参数查询失败"),
     UPDATE_SPEC_PARAM_FAILED(500, "商品规格参数更新失败"),
     DELETE_SPEC_PARAM_FAILED(500, "商品规格参数删除失败"),
     SPEC_PARAM_CREATE_FAILED(500, "新增规格参数失败"),
     USER_NOT_LOGIN(401, "用户未登录，请登录"),
+    INVALID_USER_DATA_TYPE(400, "用户名或手机号有误"),
 
     SPEC_GROUP_CREATE_FAILED(500, "新增规格组失败"),
     SPEC_GROUP_NOT_FOUND(204, "规格组查询失败"),
     DELETE_SPEC_GROUP_FAILED(500, "商品规格组删除失败"),
-    UPDATE_SPEC_GROUP_FAILED(500, "商品规格组更新失败"),
-    ;
+    UPDATE_SPEC_GROUP_FAILED(500, "商品规格组更新失败"),;
 
     ExceptionEnum(int value, String message) {
         this.value = value;
         this.message = message;
     }
+
     ExceptionEnum() {
     }
+
     private int value; //Status Code
     private String message; //描述
 }

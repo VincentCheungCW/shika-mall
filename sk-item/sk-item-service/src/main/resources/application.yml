@@ -10,6 +10,20 @@ spring:
     hikari:
       maximum-pool-size: 30
       minimum-idle: 10
+  rabbitmq:
+    host: 192.168.32.25
+    username: jiang
+    password: jiang
+    virtual-host: /shika
+    template:
+      retry:  #开启失败重试
+        enabled: true
+        initial-interval: 10000ms
+        max-interval: 30000ms #最长重试间隔，超过这个间隔将不再重试
+        multiplier: 2 #下次重试间隔的倍数，此处是2即下次重试间隔是上次的2倍
+      exchange: shika.item.exchange #默认交换器
+    publisher-confirms: true #生产者确认机制，确保消息会正确发送，如果发送失败会有错误回执，从而触发重试
+
 eureka:
   client:
     service-url:

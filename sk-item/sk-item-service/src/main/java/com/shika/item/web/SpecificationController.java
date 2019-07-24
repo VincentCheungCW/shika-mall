@@ -4,6 +4,7 @@ import com.shika.item.pojo.SpecGroup;
 import com.shika.item.pojo.SpecParam;
 import com.shika.item.service.SpecificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,16 @@ public class SpecificationController {
             @RequestParam(value = "cid",required = false) Long cid,
             @RequestParam(value = "searching",required = false) Boolean searching){
         return ResponseEntity.ok(specificationService.queryParamList(gid,cid,searching));
+    }
+
+    /**
+     * 根据分类查询规格组及组内参数
+     * @param cid
+     * @return
+     */
+    @GetMapping("group")
+    public ResponseEntity<List<SpecGroup>> querySpecGroupByCid(@RequestParam("cid") Long cid){
+        return ResponseEntity.ok(specificationService.querySpecGroupByCid(cid));
     }
 
 }
