@@ -25,6 +25,7 @@ zuul:
     user-service: /user/** # 用户微服务
     auth-service: /auth/** # 授权中心微服务
     cart-service: /cart/** # 购物车微服务
+    order-service: /order/** #订单微服务
   add-host-header: true # 携带请求本身的header头信息，解决存储token的cookie域名在经过Zuul后被改变为127.0.0.1的问题
   sensitive-headers:   #Zuul内部有默认的过滤器，会对请求和响应头信息进行重组，过滤掉敏感的头信息
                       #默认"set-cookie"在敏感头列表中，这里将敏感头列表设置为空，

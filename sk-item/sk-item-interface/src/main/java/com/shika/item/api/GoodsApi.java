@@ -1,12 +1,12 @@
 package com.shika.item.api;
 
+import com.shika.common.dto.CartDto;
 import com.shika.common.viewObjects.PageResult;
 import com.shika.item.pojo.Sku;
 import com.shika.item.pojo.Spu;
 import com.shika.item.pojo.SpuDetail;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -57,4 +57,10 @@ public interface GoodsApi {
 
     @GetMapping("sku/{id}")
     Sku querySkuById(@PathVariable("id") Long id);
+
+    @GetMapping("sku/list/ids")
+    List<Sku> querySkuByIds(@RequestParam("ids") List<Long> ids);
+
+    @PostMapping("stock/decrease")
+    Void decreaseStock(@RequestBody List<CartDto> cartDto);
 }

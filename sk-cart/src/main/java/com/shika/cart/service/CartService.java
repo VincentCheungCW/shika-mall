@@ -79,4 +79,25 @@ public class CartService {
         // 查询购物车数据
         return carts.stream().map(o -> JsonUtils.parse(o.toString(), Cart.class)).collect(Collectors.toList());
     }
+
+    public void updateNum(Long skuId, Integer num) {
+        // 获取登录用户
+        UserInfo user = UserInterceptor.getLoginUser();
+        String key = KEY_PREFIX + user.getId();
+        BoundHashOperations<String, Object, Object> hashOps = this.redisTemplate.boundHashOps(key);
+        // 获取购物车
+        String json = hashOps.get(skuId.toString()).toString();
+        Cart cart = JsonUtils.parse(json, Cart.class);
+        cart.setNum(num);
+        // 写入购物车
+        hashOps.put(skuId.toString(), JsonUtils.serialize(cart));
+    }
+
+    public void deleteCart(String skuId) {
+        // 获取登录用户
+        UserInfo user = UserInterceptor.getLoginUser();
+        String key = KEY_PREFIX + user.getId();
+        BoundHashOperations<String, Object, Object> hashOps = this.redisTemplate.boundHashOps(key);
+        hashOps.delete(skuId); //双层map:<key<skuId,cart>>
+    }
 }

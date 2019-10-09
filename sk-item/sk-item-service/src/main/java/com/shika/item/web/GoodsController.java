@@ -1,5 +1,6 @@
 package com.shika.item.web;
 
+import com.shika.common.dto.CartDto;
 import com.shika.common.viewObjects.PageResult;
 import com.shika.item.pojo.Sku;
 import com.shika.item.pojo.Spu;
@@ -111,5 +112,18 @@ public class GoodsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return ResponseEntity.ok(sku);
+    }
+
+    /**
+     * 订单完成减库存
+     * @param cartDto
+     * @return
+     */
+    @PostMapping("stock/decrease")
+    public ResponseEntity<Void> decreaseStock(@RequestBody List<CartDto> cartDto){
+        goodsService.decreaseStock(cartDto);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+
+
     }
 }

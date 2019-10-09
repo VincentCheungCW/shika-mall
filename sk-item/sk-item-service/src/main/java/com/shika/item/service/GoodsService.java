@@ -2,6 +2,7 @@ package com.shika.item.service;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.shika.common.dto.CartDto;
 import com.shika.common.enums.ExceptionEnum;
 import com.shika.common.exceptions.SkException;
 import com.shika.common.viewObjects.PageResult;
@@ -231,5 +232,21 @@ public class GoodsService {
 
     public Sku querySkuById(Long id) {
         return this.skuMapper.selectByPrimaryKey(id);
+    }
+
+
+    // 典型问题：订单提交后减库存，存在线程安全问题，产生超售，两种解决思路：
+    // 1.悲观锁，先查询库存，判断库存充足再减库存，采用分布式锁（zk/redis）
+    // 2.乐观锁，利用SQL语句实现，加where条件，只有库存不小于订单量，才执行减库存
+    // update tb_stock set stock = stock - cartDto.getNum()
+    // where sku_id = cartDto.getSkuId() and stock >= cartDto.getNum()
+    @Transactional
+    public void decreaseStock(List<CartDto> cartDtos) {
+        for (CartDto cartDto : cartDtos) {
+            int count = stockMapper.decreaseStock(cartDto.getSkuId(), cartDto.getNum());
+            if (count != 1) {
+                throw new SkException(ExceptionEnum.STOCK_NOT_ENOUGH);
+            }
+        }
     }
 }
